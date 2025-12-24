@@ -51,6 +51,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _stockController = TextEditingController(
       text: widget.product?.stockInfo?.toString() ?? '',
     );
+
+    _unitPriceController.addListener(_calculateFinalPrice);
+    _taxRateController.addListener(_calculateFinalPrice);
   }
 
   @override
@@ -63,6 +66,23 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _priceController.dispose();
     _stockController.dispose();
     super.dispose();
+  }
+
+  void _calculateFinalPrice() {
+    final unitPriceText = _unitPriceController.text.trim();
+    final taxRateText = _taxRateController.text.trim();
+
+    if (unitPriceText.isEmpty || taxRateText.isEmpty) {
+      return;
+    }
+
+    final unitPrice = double.tryParse(unitPriceText);
+    final taxRate = int.tryParse(taxRateText);
+
+    if (unitPrice != null && taxRate != null && unitPrice > 0 && taxRate >= 0) {
+      final finalPrice = unitPrice * (1 + taxRate / 100);
+      _priceController.text = finalPrice.toStringAsFixed(2);
+    }
   }
 
   void _saveProduct() async {
@@ -113,327 +133,180 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(_isEditing ? 'Edit Product' : 'Add Product'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        ),
-        body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-                key: _formKey,
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                    TextFormField(
-                    controller: _barcodeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Barcode Number *',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.qr_code),
-                    ),
-                    keyboardType: TextInputType.number,
-                    enabled: !_isEditing,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Barcode is required';
-                      }
-                      if (!RegExp(r'^[0-9]+
-                          const SizedBox(height: 16),
-                      TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                      labelText: 'Product Name *',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.shopping_bag),
-                      ),
-                      validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                      return 'Product name is required';
-                      }
-                      return null;
-                      },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                      controller: _categoryController,
-                      decoration: const InputDecoration(
-                      labelText: 'Category *',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.category),
-                      ),
-                      validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                      return 'Category is required';
-                      }
-                      return null;
-                      },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                      controller: _unitPriceController,
-                      decoration: const InputDecoration(
-                      labelText: 'Unit Price *',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.attach_money),
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                      return 'Unit price is required';
-                      }
-                      final price = double.tryParse(value.trim());
-                      if (price == null || price <= 0) {
-                      return 'Please enter a valid positive price';
-                      }
-                      return null;
-                      },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                      controller: _taxRateController,
-                      decoration: const InputDecoration(
-                      labelText: 'Tax Rate (%) *',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.percent),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                      return 'Tax rate is required';
-                      }
-                      final rate = int.tryParse(value.trim());
-                      if (rate == null || rate < 0 || rate > 100) {
-                      return 'Please enter a valid tax rate (0-100)';
-                      }
-                      return null;
-                      },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                      controller: _priceController,
-                      decoration: const InputDecoration(
-                      labelText: 'Final Price (Auto-calculated)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.price_check),
-                      helperText: 'Automatically calculated from unit price + tax',
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      readOnly: true,
-                      style: TextStyle(
-                      color: Colors.grey[700],
-                      fontWeight: FontWeight.w500,
-                      ),
-                      validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                      return 'Price is required';
-                      }
-                      final price = double.tryParse(value.trim());
-                      if (price == null || price <= 0) {
-                      return 'Please enter a valid positive price';
-                      }
-                      return null;
-                      },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                      controller: _stockController,
-                      decoration: const InputDecoration(
-                      labelText: 'Stock Information (Optional)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.inventory),
-                      helperText: 'Leave empty if not available',
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                      if (value != null && value.trim().isNotEmpty) {
-                      final stock = int.tryParse(value.trim());
-                      if (stock == null || stock < 0) {
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Edit Product' : 'Add Product'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                controller: _barcodeController,
+                decoration: const InputDecoration(
+                  labelText: 'Barcode Number *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.qr_code),
+                ),
+                keyboardType: TextInputType.number,
+                enabled: !_isEditing,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Barcode is required';
+                  }
+                  if (!RegExp(r'^[0-9]+$').hasMatch(value.trim())) {
+                    return 'Barcode must contain only numbers';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Product Name *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.shopping_bag),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Product name is required';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _categoryController,
+                decoration: const InputDecoration(
+                  labelText: 'Category *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.category),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Category is required';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _unitPriceController,
+                decoration: const InputDecoration(
+                  labelText: 'Unit Price *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.attach_money),
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Unit price is required';
+                  }
+                  final price = double.tryParse(value.trim());
+                  if (price == null || price <= 0) {
+                    return 'Please enter a valid positive price';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _taxRateController,
+                decoration: const InputDecoration(
+                  labelText: 'Tax Rate (%) *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.percent),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Tax rate is required';
+                  }
+                  final rate = int.tryParse(value.trim());
+                  if (rate == null || rate < 0 || rate > 100) {
+                    return 'Please enter a valid tax rate (0-100)';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Final Price (Auto-calculated)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.price_check),
+                  helperText: 'Automatically calculated from unit price + tax',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                readOnly: true,
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w500,
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Price is required';
+                  }
+                  final price = double.tryParse(value.trim());
+                  if (price == null || price <= 0) {
+                    return 'Please enter a valid positive price';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _stockController,
+                decoration: const InputDecoration(
+                  labelText: 'Stock Information (Optional)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.inventory),
+                  helperText: 'Leave empty if not available',
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value != null && value.trim().isNotEmpty) {
+                    final stock = int.tryParse(value.trim());
+                    if (stock == null || stock < 0) {
                       return 'Stock must be a non-negative number';
-                      }
-                      }
-                      return null;
-                      },
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                      children: [
-                      Expanded(
-                      child: OutlinedButton(
+                    }
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Cancel'),
+                        padding: EdgeInsets.all(16),
+                        child: Text('Cancel'),
                       ),
-                      ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                      child: ElevatedButton(
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
                       onPressed: _saveProduct,
                       child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(_isEditing ? 'Update' : 'Save'),
+                        padding: const EdgeInsets.all(16),
+                        child: Text(_isEditing ? 'Update' : 'Save'),
                       ),
-                      ),
-                      ),
-                      ],
-                      ),
-                      ],
-                      ),
-                      ),
-                      ),
-                      );
-                    }
-                    }).hasMatch(value.trim())) {
-  return 'Barcode must contain only numbers';
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
-  return null;
-},
-),
-const SizedBox(height: 16),
-TextFormField(
-controller: _nameController,
-decoration: const InputDecoration(
-labelText: 'Product Name *',
-border: OutlineInputBorder(),
-prefixIcon: Icon(Icons.shopping_bag),
-),
-validator: (value) {
-if (value == null || value.trim().isEmpty) {
-return 'Product name is required';
-}
-return null;
-},
-),
-const SizedBox(height: 16),
-TextFormField(
-controller: _categoryController,
-decoration: const InputDecoration(
-labelText: 'Category *',
-border: OutlineInputBorder(),
-prefixIcon: Icon(Icons.category),
-),
-validator: (value) {
-if (value == null || value.trim().isEmpty) {
-return 'Category is required';
-}
-return null;
-},
-),
-const SizedBox(height: 16),
-TextFormField(
-controller: _unitPriceController,
-decoration: const InputDecoration(
-labelText: 'Unit Price *',
-border: OutlineInputBorder(),
-prefixIcon: Icon(Icons.attach_money),
-),
-keyboardType: const TextInputType.numberWithOptions(decimal: true),
-validator: (value) {
-if (value == null || value.trim().isEmpty) {
-return 'Unit price is required';
-}
-final price = double.tryParse(value.trim());
-if (price == null || price <= 0) {
-return 'Please enter a valid positive price';
-}
-return null;
-},
-),
-const SizedBox(height: 16),
-TextFormField(
-controller: _taxRateController,
-decoration: const InputDecoration(
-labelText: 'Tax Rate (%) *',
-border: OutlineInputBorder(),
-prefixIcon: Icon(Icons.percent),
-),
-keyboardType: TextInputType.number,
-validator: (value) {
-if (value == null || value.trim().isEmpty) {
-return 'Tax rate is required';
-}
-final rate = int.tryParse(value.trim());
-if (rate == null || rate < 0 || rate > 100) {
-return 'Please enter a valid tax rate (0-100)';
-}
-return null;
-},
-),
-const SizedBox(height: 16),
-TextFormField(
-controller: _priceController,
-decoration: const InputDecoration(
-labelText: 'Final Price (Auto-calculated)',
-border: OutlineInputBorder(),
-prefixIcon: Icon(Icons.price_check),
-helperText: 'Automatically calculated from unit price + tax',
-),
-keyboardType: const TextInputType.numberWithOptions(decimal: true),
-readOnly: true,
-style: TextStyle(
-color: Colors.grey[700],
-fontWeight: FontWeight.w500,
-),
-validator: (value) {
-if (value == null || value.trim().isEmpty) {
-return 'Price is required';
-}
-final price = double.tryParse(value.trim());
-if (price == null || price <= 0) {
-return 'Please enter a valid positive price';
-}
-return null;
-},
-),
-const SizedBox(height: 16),
-TextFormField(
-controller: _stockController,
-decoration: const InputDecoration(
-labelText: 'Stock Information (Optional)',
-border: OutlineInputBorder(),
-prefixIcon: Icon(Icons.inventory),
-helperText: 'Leave empty if not available',
-),
-keyboardType: TextInputType.number,
-validator: (value) {
-if (value != null && value.trim().isNotEmpty) {
-final stock = int.tryParse(value.trim());
-if (stock == null || stock < 0) {
-return 'Stock must be a non-negative number';
-}
-}
-return null;
-},
-),
-const SizedBox(height: 24),
-Row(
-children: [
-Expanded(
-child: OutlinedButton(
-onPressed: () => Navigator.pop(context),
-child: const Padding(
-padding: EdgeInsets.all(16),
-child: Text('Cancel'),
-),
-),
-),
-const SizedBox(width: 16),
-Expanded(
-child: ElevatedButton(
-onPressed: _saveProduct,
-child: Padding(
-padding: const EdgeInsets.all(16),
-child: Text(_isEditing ? 'Update' : 'Save'),
-),
-),
-),
-],
-),
-],
-),
-),
-),
-);
-}
 }

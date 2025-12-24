@@ -20,12 +20,20 @@ class _MainScreenState extends State<MainScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductProvider>().loadProducts();
     });
+
+    // Add listener for real-time filtering
+    _barcodeController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _barcodeController.removeListener(_onSearchChanged);
     _barcodeController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    context.read<ProductProvider>().filterByBarcode(_barcodeController.text);
   }
 
   void _searchProduct() async {
@@ -161,11 +169,21 @@ class _MainScreenState extends State<MainScreen> {
           Expanded(
             child: TextField(
               controller: _barcodeController,
-              decoration: const InputDecoration(
-                labelText: 'Barcode Number',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.qr_code),
+              decoration: InputDecoration(
+                labelText: 'Search by Barcode',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.qr_code),
+                suffixIcon: context.watch<ProductProvider>().searchQuery.isNotEmpty
+                    ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _barcodeController.clear();
+                    context.read<ProductProvider>().clearSearch();
+                  },
+                )
+                    : null,
               ),
+              keyboardType: TextInputType.number,
               onSubmitted: (_) => _searchProduct(),
             ),
           ),
@@ -175,15 +193,6 @@ class _MainScreenState extends State<MainScreen> {
             icon: const Icon(Icons.search),
             label: const Text('Search'),
           ),
-          if (context.watch<ProductProvider>().searchedProduct != null)
-            IconButton(
-              onPressed: () {
-                context.read<ProductProvider>().clearSearch();
-                _barcodeController.clear();
-              },
-              icon: const Icon(Icons.clear),
-              tooltip: 'Clear Search',
-            ),
         ],
       ),
     );
@@ -201,6 +210,21 @@ class _MainScreenState extends State<MainScreen> {
             : provider.products;
 
         if (productsToShow.isEmpty) {
+          if (provider.searchQuery.isNotEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No products found with barcode "${provider.searchQuery}"',
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
           return const Center(
             child: Text('No products found. Add your first product!'),
           );
@@ -238,7 +262,7 @@ class _MainScreenState extends State<MainScreen> {
             final isHighlighted = context.watch<ProductProvider>().searchedProduct?.barcodeNo == product.barcodeNo;
             return DataRow(
               color: MaterialStateProperty.resolveWith<Color?>(
-                (states) => isHighlighted ? Colors.yellow[100] : null,
+                    (states) => isHighlighted ? Colors.yellow[100] : null,
               ),
               cells: [
                 DataCell(Text(product.barcodeNo)),
@@ -280,7 +304,7 @@ class _MainScreenState extends State<MainScreen> {
       itemBuilder: (context, index) {
         final product = products[index];
         final isHighlighted = context.watch<ProductProvider>().searchedProduct?.barcodeNo == product.barcodeNo;
-        
+
         return Card(
           color: isHighlighted ? Colors.yellow[100] : null,
           elevation: 2,

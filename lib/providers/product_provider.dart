@@ -4,12 +4,15 @@ import '../database/database_helper.dart';
 
 class ProductProvider with ChangeNotifier {
   List<Product> _products = [];
+  List<Product> _filteredProducts = [];
   Product? _searchedProduct;
   bool _isLoading = false;
+  String _searchQuery = '';
 
-  List<Product> get products => _products;
+  List<Product> get products => _searchQuery.isEmpty ? _products : _filteredProducts;
   Product? get searchedProduct => _searchedProduct;
   bool get isLoading => _isLoading;
+  String get searchQuery => _searchQuery;
 
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
@@ -20,12 +23,34 @@ class ProductProvider with ChangeNotifier {
     try {
       _products = await _dbHelper.getAllProducts();
       _searchedProduct = null;
+      if (_searchQuery.isNotEmpty) {
+        _filterProducts(_searchQuery);
+      }
     } catch (e) {
       debugPrint('Error loading products: $e');
     }
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  void filterByBarcode(String query) {
+    _searchQuery = query.trim();
+    _searchedProduct = null;
+
+    if (_searchQuery.isEmpty) {
+      _filteredProducts = [];
+    } else {
+      _filterProducts(_searchQuery);
+    }
+
+    notifyListeners();
+  }
+
+  void _filterProducts(String query) {
+    _filteredProducts = _products.where((product) {
+      return product.barcodeNo.contains(query);
+    }).toList();
   }
 
   Future<bool> searchByBarcode(String barcodeNo) async {
@@ -74,6 +99,8 @@ class ProductProvider with ChangeNotifier {
 
   void clearSearch() {
     _searchedProduct = null;
+    _searchQuery = '';
+    _filteredProducts = [];
     notifyListeners();
   }
 }
