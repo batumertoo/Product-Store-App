@@ -100,7 +100,7 @@ flutter run -d linux
    - **Tax Rate (%)** (required, 0-100)
    - **Final Price** (auto-calculated and read-only)
    - **Stock Information** (optional, non-negative integer)
-3. Final price is automatically calculated as: `Unit Price × (1 + Tax Rate ÷ 100)`
+3. Final price is automatically calculated as: Unit Price × (1 + Tax Rate ÷ 100)
 4. Click **Save** to add the product
 
 ### Searching Products
@@ -150,17 +150,21 @@ The app comes pre-loaded with 15 sample products across various categories:
 
 | Category | Products | Count |
 |----------|----------|-------|
-| Electronics | iPhone 15, Samsung Galaxy S24, PlayStation 5, Dell XPS 13, Kindle Paperwhite | 5 |
+| Electronics | Apple iPhone 15, Samsung Galaxy S24, PlayStation 5, Dell XPS 13, Kindle Paperwhite | 5 |
 | Audio | Sony WH-1000XM5 Headphones | 1 |
 | Footwear | Nike Air Max 270, Adidas Ultraboost 22 | 2 |
-| Accessories | Logitech MX Master 3S Mouse, Ray-Ban Sunglasses, North Face Backpack | 3 |
-| Food & Beverages | Coca-Cola 6 Pack, Organic Avocados, Starbucks Coffee Beans | 3 |
+| Accessories | Logitech MX Master 3S Mouse, Ray-Ban Aviator Sunglasses, The North Face Backpack | 3 |
+| Beverages | Coca-Cola 6 Pack | 1 |
+| Food | Organic Avocados, Starbucks Coffee Beans | 2 |
 | Clothing | Levi's 501 Jeans | 1 |
 
 **Sample Products Details:**
 - Barcodes range from `1234567890` to `5555555555`
 - Prices range from $5.99 (Coca-Cola) to $1299.99 (Dell XPS 13)
-- Tax rates vary: 0% (fresh food), 8% (footwear/clothing/beverages), 18% (electronics/accessories)
+- Tax rates by product type:
+  - 0% tax: Organic Avocados (fresh produce)
+  - 8% tax: Footwear, Clothing, Beverages, Coffee Beans, and some Accessories (Backpack)
+  - 18% tax: Electronics, Audio, and most Accessories (Mouse, Sunglasses)
 - All products include stock information (10-500 units)
 
 **Note**: Sample data is only inserted on first app launch when the database is created. To reset:
