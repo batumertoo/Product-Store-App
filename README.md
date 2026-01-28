@@ -1,7 +1,3 @@
-# mobileprogrammingproject4
-Batuhan Mert Yücetürk 42067670192
-Kemal Furkan Saygılı 26923770332
-
 # Product Manager App (barcode_product_app)
 
 A cross-platform Flutter application for managing products with barcode search, real-time filtering, and automatic price calculation. Built with Flutter 3.0+ and Material Design 3.
